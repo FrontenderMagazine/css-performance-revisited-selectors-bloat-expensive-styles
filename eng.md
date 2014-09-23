@@ -1,23 +1,44 @@
 # CSS performance revisited: selectors, bloat and expensive styles 
 
-**What is fast CSS? Where are the bottlenecks? Are the rules of slow and fast selectors even valid anymore? Are the properties we use more important than the selectors? I felt it was time to revisit some of these questions.**
+*What is fast CSS? Where are the bottlenecks? Are the rules of slow and fast 
+selectors even valid anymore? Are the properties we use more important than the 
+selectors? I felt it was time to revisit some of these questions.*
 
-In the broad scheme of things, CSS optimisation is certainly low down the priority order when trying to speed websites/web applications up. There are so many other optimisations that provide easier and greater gains. However, if tiny improvements are made to all areas of a website, including CSS, combined they will make a more substantial difference; the user will always benefit.
+In the broad scheme of things, CSS optimisation is certainly low down the
+priority order when trying to speed websites/web applications up. There are so
+many other optimisations that provide easier and greater gains. However, if tiny
+improvements are made to all areas of a website, including CSS, combined they
+will make a more substantial difference; the user will always benefit.
 
-Whenever exchanging theories about the relative ‘speed’ of CSS, other developers often reference [Steve Souders][1] work on CSS selectors from 2009. It’s used to validate claims such as ‘attribute selectors are slow’ or ‘pseudo selectors are slow’.
+Whenever exchanging theories about the relative ‘speed’ of CSS, other developers
+often reference [Steve Souders][1] work on CSS selectors from 2009. It’s used to
+validate claims such as ‘attribute selectors are slow’ or ‘pseudo selectors are
+slow’.
 
-For at least the last couple of years, I’ve felt these kinds of things just weren’t worth worrying about. The soundbite I have been wheeling out for years is:
+For at least the last couple of years, I’ve felt these kinds of things just
+weren’t worth worrying about. The soundbite I have been wheeling out for years
+is:
 
 > With CSS, architecture is outside the braces; performance is inside
+
 > [Ben Frain][2]
 
-But besides referencing [Nicole Sullivan’s later post on Performance Calendar][3] to back up my assumptions that the selectors used don’t really matter, I had never actually tested the theory; a shortfall in my talent and a less than perfect analytical mind prevented me from even attempting it.
+But besides referencing [Nicole Sullivan’s later post on Performance
+Calendar][3] to back up my assumptions that the selectors used don’t really
+matter, I had never actually tested the theory; a shortfall in my talent and a
+less than perfect analytical mind prevented me from even attempting it.
 
-Nothings changed with my mind, but these days I feel happier to open myself to ridicule by attempting this – if only to get someone with more knowledge/evidence to provide further data. So I decided to create some primitive tests.
+Nothings changed with my mind, but these days I feel happier to open myself to
+ridicule by attempting this – if only to get someone with more
+knowledge/evidence to provide further data. So I decided to create some
+primitive tests.
 
 ## Testing selector speed
 
-Steve Souders’ aforementioned tests use JavaScript’s `new Date()`. However, nowadays, modern browsers (iOS/Safari being notable exceptions) support the Navigation Timing API which gives us a more accurate measure we can use. I’ll be implementing it like this:
+Steve Souders’ aforementioned tests use JavaScript’s `new Date()`. However,
+nowadays, modern browsers (iOS/Safari being notable exceptions) support the
+Navigation Timing API which gives us a more accurate measure we can use. I’ll be
+implementing it like this:
 
     <script type="text/javascript">
         ;(function TimeThisMother() {
@@ -30,9 +51,11 @@ Steve Souders’ aforementioned tests use JavaScript’s `new Date()`. However, 
         })();
     </script>
 
-This lets us limit the timing between the point all assets have been received (`responseEnd`) and the point the page is rendered (`loadEventEnd`).
+This lets us limit the timing between the point all assets have been received
+(`responseEnd`) and the point the page is rendered (`loadEventEnd`).
 
-So, I setup a very simple test. 20 different pages, all with an identical, enormous DOM, made up of 1000 identical chunks of this markup:
+So, I setup a very simple test. 20 different pages, all with an identical,
+enormous DOM, made up of 1000 identical chunks of this markup:
 
     <div class="tagDiv wrap1">
       <div class="tagDiv layer1" data-div="layer1">
@@ -44,7 +67,9 @@ So, I setup a very simple test. 20 different pages, all with an identical, enorm
       </div>
     </div>
 
-Each page differed only in the rule applied to select the inner most node within the blocks. 20 different selection methods were tested to colour the inner most nodes red:
+Each page differed only in the rule applied to select the inner most node within
+the blocks. 20 different selection methods were tested to colour the inner most
+nodes red:
 
 1. [Data attribute][4]
 2. [Data attribute (qualified)][5]
@@ -67,7 +92,8 @@ Each page differed only in the rule applied to select the inner most node within
 19. [Element treble with pseudo][22]
 20. [Single class][23]
 
-The test was run 5 times on each browser and the result averaged across the 5 results. Modern browsers were tested:
+The test was run 5 times on each browser and the result averaged across the 5
+results. Modern browsers were tested:
 
 * Chrome 34.0.1838.2 dev
 * Firefox 29.0a2 Aurora
@@ -75,11 +101,22 @@ The test was run 5 times on each browser and the result averaged across the 5 re
 * Internet Explorer 9.0.8112.16421
 * Android 4.2 (7" tablet)
 
-A prior version of Internet Explorer (rather than the latest IE) was used to shed some light on how a popular browser behaved that doesn’t get the same rolling frequent updates of the other browsers.
+A prior version of Internet Explorer (rather than the latest IE) was used to
+shed some light on how a popular browser behaved that doesn’t get the same
+rolling frequent updates of the other browsers.
 
-Want to try the same tests out for yourself? Go and grab the files from this GitHub link: [https://github.com/benfrain/css-performance-tests][24]. Just open each page in your browser of choice (remember the browser must support the Network Timing API to alert a response). Also be aware that when I performed the test I discarded the first couple of results as they tended to be unusually high in some browsers.
+Want to try the same tests out for yourself? Go and grab the files from this
+GitHub link: [https://github.com/benfrain/css-performance-tests][24]. Just open
+each page in your browser of choice (remember the browser must support the
+Network Timing API to alert a response). Also be aware that when I performed the
+test I discarded the first couple of results as they tended to be unusually high
+in some browsers.
 
-When considering the results, I don’t think that one browser compared with another really tells us much. That is not the purpose of the tests. The purpose is purely to try and evaluate the comparative difference in selection speed between the different selectors employed. Therefore, when looking at the table, it makes more sense to look down the columns than across the rows.
+When considering the results, I don’t think that one browser compared with
+another really tells us much. That is not the purpose of the tests. The purpose
+is purely to try and evaluate the comparative difference in selection speed
+between the different selectors employed. Therefore, when looking at the table,
+it makes more sense to look down the columns than across the rows.
 
 Here are the results. All times in milliseconds:
 
@@ -272,51 +309,104 @@ Here are the results. All times in milliseconds:
  
 ## The difference between fastest and slowest selector
 
-The Biggest Diff. column shows the difference in milliseconds between the fastest and slowest selector. Of the desktop browsers, IE9 stands out as having the biggest difference between fastest and slowest selectors at 31ms. The others are all around half of that figure. However, interestingly there was no consensus on what the slowest selector was.
+The Biggest Diff. column shows the difference in milliseconds between the
+fastest and slowest selector. Of the desktop browsers, IE9 stands out as having
+the biggest difference between fastest and slowest selectors at 31ms. The others
+are all around half of that figure. However, interestingly there was no
+consensus on what the slowest selector was.
 
 ## The slowest selector
 
-I was interested to note that the slowest selector type differed from browser to browser. Both Opera and Chrome found the ‘insanity’ selector (test 13) the hardest to match (the similarity Opera and Chrome here perhaps not surprising given their shared blink engine), while Firefox struggled with a single pseudo selector ([test 6][25]), as did the Android 4.2 device (a Tesco hudl 7" tablet). Internet Explorer 9’s achilles heel was the partial attribute selector ([test 10][26]).
+I was interested to note that the slowest selector type differed from browser to
+browser. Both Opera and Chrome found the ‘insanity’ selector (test 13) the
+hardest to match (the similarity Opera and Chrome here perhaps not surprising
+given their shared blink engine), while Firefox struggled with a single pseudo
+selector ([test 6][25]), as did the Android 4.2 device (a Tesco hudl 7" tablet).
+Internet Explorer 9’s achilles heel was the partial attribute selector ([test
+10][26]).
 
 ## Good CSS architecture practices
 
-One thing we can be clear on is that using a flat hierarchy of class based selectors not only produces more modular and less specific code making it more modular and re-usable, it also provides selectors that are as fast as any others (yes, ID selectors would probably be faster but I for one don’t fancy building a large code base up relying on ID selectors).
+One thing we can be clear on is that using a flat hierarchy of class based
+selectors not only produces more modular and less specific code making it more
+modular and re-usable, it also provides selectors that are as fast as any others
+(yes, ID selectors would probably be faster but I for one don’t fancy building a
+large code base up relying on ID selectors).
 
 ### What does this mean?
 
-For me, it has confirmed my believe that it is absolute folly to worry about the type of selector used. Second guessing a selector engine is pointless as the manner selector engines work through selectors clearly differs. Further more, the difference between fastest and slowest selectors isn’t massive, even on a ludicrous DOM size like this. As we say in the North of England, ‘There are bigger fish to fry’.
+For me, it has confirmed my believe that it is absolute folly to worry about the
+type of selector used. Second guessing a selector engine is pointless as the
+manner selector engines work through selectors clearly differs. Further more,
+the difference between fastest and slowest selectors isn’t massive, even on a
+ludicrous DOM size like this. As we say in the North of England, ‘There are
+bigger fish to fry’.
 
-Since originally writing this post, Benjamin Poulain, a WebKit Engineer got in touch to point out his concerns with the methodology used. His comments were very interesting and with his permission, some of the information is quoted below:
+Since originally writing this post, Benjamin Poulain, a WebKit Engineer got in
+touch to point out his concerns with the methodology used. His comments were
+very interesting and with his permission, some of the information is quoted
+below:
 
-“By choosing to measure performance through the loading, you are measuring plenty of much much bigger things than CSS, CSS Performance is only a small part of loading a page:
+“By choosing to measure performance through the loading, you are measuring 
+plenty of much much bigger things than CSS, CSS Performance is only a small part 
+of loading a page:
 
-If I take the time profile of `[class^="wrap"]` for example (taken on an old WebKit so that it is somewhat similar to Chrome), I see:
+If I take the time profile of `[class^="wrap"]` for example (taken on an old
+WebKit so that it is somewhat similar to Chrome), I see:
 
-~10% of the time is spent in the rasterizer. ~21% of the time is spent on the first layout. ~48% of the time is spent in the parser and DOM tree creation ~8% is spent on style resolution ~5% is spent on collecting the style – this is what we should be testing and what should take most of the time. (The remaining time is spread over many many little functions).
+~10% of the time is spent in the rasterizer. ~21% of the time is spent on the 
+first layout. ~48% of the time is spent in the parser and DOM tree creation ~8% 
+is spent on style resolution ~5% is spent on collecting the style – this is what 
+we should be testing and what should take most of the time. (The remaining time 
+is spread over many many little functions).
 
-With the test above, let say we have a baseline of 100 ms with the fastest selector. Of that, 5 ms would be spent collecting style. If a second selector is 3 times slower, that would appear as 110ms in total. The test should report a 300% difference but instead it only shows 10%.”
+With the test above, let say we have a baseline of 100 ms with the fastest
+selector. Of that, 5 ms would be spent collecting style. If a second selector is
+3 times slower, that would appear as 110ms in total. The test should report a
+300% difference but instead it only shows 10%.”
 
-At this point, I responded that whilst I understood what Benjamin was pointing our, my test was only supposed to illustrate that the same page, with all other things being equal, renders largely the same irregardless of the selector used. Benjamin took the time to reply with further detail:
+At this point, I responded that whilst I understood what Benjamin was pointing
+our, my test was only supposed to illustrate that the same page, with all other
+things being equal, renders largely the same irregardless of the selector used.
+Benjamin took the time to reply with further detail:
 
-“I completely agree it is useless to optimize selectors upfront, but for completely different reasons:
+“I completely agree it is useless to optimize selectors upfront, but for 
+completely different reasons:
 
-It is practically impossible to predict the final performance impact of a given selector by just examining the selectors. In the engine, selectors are reordered, split, collected and compiled. To know the final performance of a given selectors, you would have to know in which bucket the selector was collected, how it is compiled, and finally what does the DOM tree looks like.
+It is practically impossible to predict the final performance impact of a given
+selector by just examining the selectors. In the engine, selectors are
+reordered, split, collected and compiled. To know the final performance of a
+given selectors, you would have to know in which bucket the selector was
+collected, how it is compiled, and finally what does the DOM tree looks like.
 
-All of that is very different between the various engines, making the whole process even less predictable.
+All of that is very different between the various engines, making the whole
+process even less predictable.
 
-The second argument I have against web developers optimizing selectors is that they will likely make things worse. The amount of misinformation about selectors is larger than correct cross-browser information. The chance of someone doing the right thing is pretty low.
+The second argument I have against web developers optimizing selectors is that
+they will likely make things worse. The amount of misinformation about selectors
+is larger than correct cross-browser information. The chance of someone doing
+the right thing is pretty low.
 
-In practice, people discover performance problems with CSS and start removing rules one by one until the problem go away. I think that is the right way to go about this, it is easy and will lead to correct outcome.”
+In practice, people discover performance problems with CSS and start removing
+rules one by one until the problem go away. I think that is the right way to go
+about this, it is easy and will lead to correct outcome.”
 
 ## Cause and effect
 
-If the number of DOM elements on the page is halved, as you would expect, the speed to complete any of the test drops commensurately. But getting rid of the DOM isn’t always a possibility. This made me wonder what difference the amount of unused styles in the CSS would have on the results.
+If the number of DOM elements on the page is halved, as you would expect, the
+speed to complete any of the test drops commensurately. But getting rid of the
+DOM isn’t always a possibility. This made me wonder what difference the amount
+of unused styles in the CSS would have on the results.
 
 ## What difference to selection speed does a whole lot of unused styles make?
 
-[Another test][27]: I grabbed a big fat style sheet from fiat.co.uk. It was about 3000 lines of CSS. All these irrelevant styles were inserted before a final rule that would select our inner `a.link` node and make it red. I did the same averaging of the results across 5 runs on each browser.
+[Another test][27]: I grabbed a big fat style sheet from fiat.co.uk. It was 
+about 3000 lines of CSS. All these irrelevant styles were inserted before a 
+final rule that would select our inner `a.link` node and make it red. I did the 
+same averaging of the results across 5 runs on each browser.
 
-I [then cut half those rules out and repeated the test][28] to give a comparison. Here are the results:
+I [then cut half those rules out and repeated the test][28] to give a
+comparison. Here are the results:
 
 <table>
 <tr>
@@ -347,23 +437,36 @@ I [then cut half those rules out and repeated the test][28] to give a comparison
 
 ## Style diet
 
-This provides some interesting figures. For example, Firefox was 1.7X slower to complete this test than it was with its slowest selector test (test 6). Android 4.3 was 1.2X slower than its slowest selector test (test 6). Internet Explorer was a whopping 2.5X slower than it’s slowest selector!
+This provides some interesting figures. For example, Firefox was 1.7X slower to
+complete this test than it was with its slowest selector test (test 6). Android
+4.3 was 1.2X slower than its slowest selector test (test 6). Internet Explorer
+was a whopping 2.5X slower than it’s slowest selector!
 
-You can see that things dropped down considerably for Firefox when half of the styles were removed (approx 1500 lines). The Android device came down to around the speed of its slowest selector at that point too.
+You can see that things dropped down considerably for Firefox when half of the
+styles were removed (approx 1500 lines). The Android device came down to around
+the speed of its slowest selector at that point too.
 
 ### Removing unused styles
 
-Does this kind of horror scenario sound familiar to you? Enormous CSS files with all manner of selectors (often with selectors in that don’t even work), lumps of ever more specific selectors 7 or more levels deep, non-applicable prefix’s, IDs all over the shop and file sizes of 50–80KB (sometimes more).
+Does this kind of horror scenario sound familiar to you? Enormous CSS files with
+all manner of selectors (often with selectors in that don’t even work), lumps of
+ever more specific selectors 7 or more levels deep, non-applicable prefix’s, IDs
+all over the shop and file sizes of 50–80KB (sometimes more).
 
-If you are working on a code base that has a big fat CSS file like this, that no-one is quite sure what all the styles are actually for – look there for your CSS optimisations before the selectors being employed.
+If you are working on a code base that has a big fat CSS file like this, that
+no-one is quite sure what all the styles are actually for – look there for your
+CSS optimisations before the selectors being employed.
 
-Tackling this first seems to make more sense than being picky over the selectors used. It will have double the impact; less code for the user to download but also less for the UA to parse – a speed bump all around.
+Tackling this first seems to make more sense than being picky over the selectors
+used. It will have double the impact; less code for the user to download but
+also less for the UA to parse – a speed bump all around.
 
 Then again, that won’t help with the actual performance of your CSS.
 
 ## Performance inside the brackets
 
-The [final test][29] I ran was to hit the page with a bunch of ‘expensive’ properties and values.
+The [final test][29] I ran was to hit the page with a bunch of ‘expensive’
+properties and values.
 
     .link {
         background-color: red;
@@ -398,23 +501,65 @@ With that rule applied, here are the results:
 </tr>
 </table>
 
-Here all browsers are at least up with their slowest selector speed (IE was 1.5X slower than its slowest selector test (10) and the Android device was 1.3X slower than the slowest selector test (test 6)) but that’s not even the full picture. Try and scroll! Repaint on these kind of styles will make your computer cry.
+Here all browsers are at least up with their slowest selector speed (IE was 1.5X
+slower than its slowest selector test (10) and the Android device was 1.3X
+slower than the slowest selector test (test 6)) but that’s not even the full
+picture. Try and scroll! Repaint on these kind of styles will make your computer
+cry.
 
-The properties we stick inside the braces are what really taxes a system. It stands to reason that scrolling a page that requires endless expensive re-paints and layout changes is going to put a strain on the device. Nice HiDPI screen? It will be even worse as the CPU/GPU strains to get everything re-painted to screen in under 16ms.
+The properties we stick inside the braces are what really taxes a system. It
+stands to reason that scrolling a page that requires endless expensive re-paints
+and layout changes is going to put a strain on the device. Nice HiDPI screen? It
+will be even worse as the CPU/GPU strains to get everything re-painted to screen
+in under 16ms.
 
-With the expensive styles test, on the 15" Retina MacBook Pro I tested on, the paint time shown in continuous paint mode in Chrome never dropped below 280ms (and remember, we are aiming for sub–16ms). To put that in perspective for you, the first selector test page, never went above 2.5ms. That wasn’t a typo. Those properties created a 112X increase in paint time. Holy ’effing expensive properties Batman! Indeed Robin. Indeed.
+With the expensive styles test, on the 15" Retina MacBook Pro I tested on, the
+paint time shown in continuous paint mode in Chrome never dropped below 280ms
+(and remember, we are aiming for sub–16ms). To put that in perspective for you,
+the first selector test page, never went above 2.5ms. That wasn’t a typo. Those
+properties created a 112X increase in paint time. Holy ’effing expensive
+properties Batman! Indeed Robin. Indeed.
 
 ## What properties are expensive?
 
-An ‘expensive’ property/value pairing is one we can be pretty confident will make the browser struggle with when it has to repaint the screen (e.g. on scroll).
+An ‘expensive’ property/value pairing is one we can be pretty confident will
+make the browser struggle with when it has to repaint the screen (e.g. on
+scroll).
 
-How can we know what will be an ‘expensive’ style? Thankfully, we can apply common sense to this and get a pretty good idea what is going to tax the browser. Anything that requires a browser to manipulate/calculate before painting to the page will be more costly. For example, box-shadows, border-radius, transparency (as the browser has to calculate what is shown below), transforms and performance killers like CSS filters – if performance is your priority, anything like that is your worst enemy.
+How can we know what will be an ‘expensive’ style? Thankfully, we can apply
+common sense to this and get a pretty good idea what is going to tax the
+browser. Anything that requires a browser to manipulate/calculate before
+painting to the page will be more costly. For example, box-shadows, border-
+radius, transparency (as the browser has to calculate what is shown below),
+transforms and performance killers like CSS filters – if performance is your
+priority, anything like that is your worst enemy.
 
-Juriy “kangax” Zaytsev did [a fantastic blog post also covering CSS performance][30] back in 2012. He was using the various developer tools to measure performance. He did a particularly good job of showing the difference that various properties had on performance. If this kind of thing interests you then that post is well worth your time.
+Juriy “kangax” Zaytsev did [a fantastic blog post also covering CSS
+performance][30] back in 2012. He was using the various developer tools to
+measure performance. He did a particularly good job of showing the difference
+that various properties had on performance. If this kind of thing interests you
+then that post is well worth your time.
 
 ## Conclusion
 
-These are my takeaways from this little episode: - sweating over the selectors used in modern browsers is futile; most selection methods are now so fast it’s really not worth spending much time over. Furthermore, there is disparity across browsers of what the slowest selectors are anyway. Look here last to speed up your CSS. - excessive unused styles are likely to cost more, performance wise, than any selectors you chose so look to tidy up there second. 3000 lines that are unused or surplus on a page are not even that uncommon. While it’s common to bunch all the styles up into a great big single `styles.css`, if different areas of your site/web application can have different (additional) stylesheets added (dependency graph style), that may be the better option. If your CSS has been added to by a number of different authors over time, look to tools like [UnCSS][31] to automate the removal of styles – doing that process by hand is no fun! - the battle for high performing CSS will not be won in the selectors used, it will be won with the judicious use of property and values - getting something painted to screen fast is obviously important but so is how a page feels when the user interacts with it. Look for expensive property and value pairs first (Chrome continuous repaint mode is your friend here), they are likely to provide the biggest gains.
+These are my takeaways from this little episode: - sweating over the selectors
+used in modern browsers is futile; most selection methods are now so fast it’s
+really not worth spending much time over. Furthermore, there is disparity across
+browsers of what the slowest selectors are anyway. Look here last to speed up
+your CSS. - excessive unused styles are likely to cost more, performance wise,
+than any selectors you chose so look to tidy up there second. 3000 lines that
+are unused or surplus on a page are not even that uncommon. While it’s common to
+bunch all the styles up into a great big single `styles.css`, if different areas
+of your site/web application can have different (additional) stylesheets added
+(dependency graph style), that may be the better option. If your CSS has been
+added to by a number of different authors over time, look to tools like
+[UnCSS][31] to automate the removal of styles – doing that process by hand is no
+fun! - the battle for high performing CSS will not be won in the selectors used,
+it will be won with the judicious use of property and values - getting something
+painted to screen fast is obviously important but so is how a page feels when
+the user interacts with it. Look for expensive property and value pairs first
+(Chrome continuous repaint mode is your friend here), they are likely to provide
+the biggest gains.
 
 [1]: http://stevesouders.com/
 [2]: http://benfrain.com/
