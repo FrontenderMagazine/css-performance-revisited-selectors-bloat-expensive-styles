@@ -129,7 +129,7 @@ Internet Explorer.
 
 Вот результаты. Время указано в миллисекундах:
 
-<table>
+<table class="test-table">
 <tr>
 <td>Тест</td>
 <td>Chrome 34</td>
