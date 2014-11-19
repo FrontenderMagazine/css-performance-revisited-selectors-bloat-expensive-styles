@@ -593,6 +593,13 @@ CSS, и начинают удалять правило за правилом, п
 кода, скорее всего, принесёт
 наиболее ощутимый результат.
 
+<section class="gratitude-block gratitude-block-ok">
+  <a title="Ссылка на блог компании" href="http://weareok.ru/">
+    <img src="img/ok.svg" alt="Логотип компании «Одноклассники»">
+  </a>
+  <p>Статья переведена благодаря спонсорской поддержке компании «<a title="Ссылка на блог компании" href="http://weareok.ru/">Одноклассники</a>».</p>
+</section>
+
 [1]: http://stevesouders.com/
 [2]: http://benfrain.com/
 [3]: http://calendar.perfplanet.com/2011/css-selector-performance-has-changed-for-the-better/
